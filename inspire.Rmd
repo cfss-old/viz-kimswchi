@@ -6,9 +6,8 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-
 library(tidyverse)
+library(knitr)
 
 issues <- read.csv("Data/inspire_issues.csv") %>%
   rename(Issue = `ï..Issue`)
@@ -94,28 +93,17 @@ rep2 <- cat_issue_type %>%
 
 cat_join <- rbind(cat_issue_type, rbind(rep1, rep2))
 
-https://www.r-bloggers.com/timeline-graph-with-ggplot2/
-http://stackoverflow.com/questions/7492274/draw-a-chronological-timeline-with-ggplot2
-http://jason.bryer.org/timeline/
-http://www.statsblogs.com/2012/07/07/timeline-graph-with-ggplot2/  
+#how to make timeline
+#https://www.r-bloggers.com/timeline-graph-with-ggplot2/
+#http://stackoverflow.com/questions/7492274/draw-a-chronological-timeline-with-ggplot2
+#http://jason.bryer.org/timeline/
+#http://www.statsblogs.com/2012/07/07/timeline-graph-with-ggplot2/  
   
 ggplot(filter(cat_join, Issue < 2),
-       aes(Issue, NumPages, fill = ItemType)) + 
+       aes(Issue, SumPages, fill = ItemType)) + 
   geom_area() + 
   scale_x_continuous(breaks = seq(1,16,1))
   
-ggplot(filter(cat, Issue < 2)) + 
-  geom_area(stat = "bin", aes(y = NumPages, fill = ItemType))
-
-set.seed(345)
-Sector <- rep(c("S01","S02","S03","S04","S05","S06","S07"),times=7)
-Year <- as.numeric(rep(c("1950","1960","1970","1980","1990","2000","2010"),each=7))
-Value <- runif(49, 10, 100)
-data <- data.frame(Sector,Year,Value)
-
-ggplot(data, aes(x=Year, y=Value, fill=Sector)) + 
-    geom_area()
-
 ggplot(cat_issue_type, aes(x=Issue, y=SumPages, fill=ItemType)) + 
   geom_area() + 
   scale_x_continuous(breaks = seq(1, 16, 1))
@@ -151,26 +139,6 @@ cat_type <- rbind(cat_type, cat_type2)
 ggplot(filter(cat_type, Issue < 2), 
        aes(x=Issue, y=Share, fill=ItemType)) + 
   geom_area(color = "black")
-
-
 ```
 
-## R Markdown
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
-```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
