@@ -2,10 +2,14 @@
 title: "Inspire"
 author: "Soo Wan Kim"
 date: "April 25, 2017"
-output: html_document
+output:
+  html_document:
+    code_folding: hide
+    keep_md: true
+    theme: default
 ---
 
-```{r setup, include=FALSE}
+```{r setup}
 library(tidyverse)
 library(knitr)
 
@@ -141,4 +145,13 @@ ggplot(filter(cat_type, Issue < 2),
   geom_area(color = "black")
 ```
 
+```{r}
+#timeline stuff
+#https://daattali.com/shiny/timevis-demo/
+#https://github.com/pachamaltese/bowie-timeline
+#http://ramnathv.github.io/rCharts/
+#http://stackoverflow.com/questions/20695311/chronological-timeline-with-points-in-time-and-format-date
+#https://www.packtpub.com/mapt/book/big-data-and-business-intelligence/9781783989508/2/ch02lvl1sec34/generating-an-interactive-gantt/timeline-chart-in-r
+
+```
 
