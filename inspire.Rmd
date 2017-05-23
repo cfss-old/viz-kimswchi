@@ -9,29 +9,144 @@ output:
     theme: default
 ---
 
-```{r setup}
+```{r setup, include = FALSE}
 library(tidyverse)
 library(knitr)
+library(plotly)
+library(scales)
+library(ggthemes)
+library(lubridate)
+library(knitr)
+library(stringr)
 
-issues <- read.csv("Data/inspire_issues.csv") %>%
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+
+theme_set(theme_minimal())
+
+hist <- read.csv("Data/inspire_issues.csv") %>%
   rename(Issue = `ï..Issue`)
 
-cat <- read.csv("Data/inspire_catalogue.csv") %>%
+catalogue <- read.csv("Data/inspire_catalogue.csv") %>%
   rename(Issue = `ï..Issue`) %>%
   transform(Issue = as.double(Issue)) %>%
   transform(NumPages = as.double(NumPages)) %>%
   transform(ItemType = as.character(ItemType)) %>%
   transform(ItemType = ifelse(ItemType %in% c("Poetry", "Photography"), "Art and Poetry", ItemType)) %>%
-  transform(ItemType = as.factor(ItemType))
+  transform(ItemType = as.factor(ItemType)) %>%
+  transform(ItemType = factor(ItemType, levels = ItemType)) %>%
+  transform(AuthorName = as.character(AuthorName)) %>%
+  transform(AuthorName = ifelse(AuthorName == "Usama Bin Laden", "Usama bin Laden", AuthorName)) %>%
+  transform(AuthorName = ifelse(AuthorName == "AQ Chef", "'AQ Chef'", AuthorName)) %>%
+  transform(AuthorName = ifelse(AuthorName == "Terr0r1st", "'Terr0r1st'", AuthorName))
   
-cat_type <- cat %>%
+#cat$ItemType <- factor(cat$ItemType, levels(cat$ItemType)[cat_type$ItemType])
+```
+
+## About
+
+table
+
+```{r about_table}
+table <- hist %>%
+  select(Issue, CoverStory, ReleaseDate, TotalPages) %>%
+  transform(ReleaseDate = as.Date(ReleaseDate, "%m/%d/%y")) %>%
+  mutate(ReleaseYear = as.character(year(ReleaseDate))) %>%
+  mutate(ReleaseMonth = month.abb[month(ReleaseDate)]) %>%
+  transform(ReleaseDate = paste(ReleaseMonth, ReleaseYear)) %>%
+  select(-ReleaseYear, -ReleaseMonth) %>%
+  transform(CoverStory = as.character(CoverStory)) %>%
+  transform(CoverStory = ifelse(Issue == 3, "$4,200", CoverStory))
+
+table %>%
+  kable(format = "html", col.names = c("Issue", "Cover Story", "Release Date", "# Pages"))
+```
+
+## History
+
+timeline of publication and major events
+
+```{r}
+timeline <- read.csv("Data/timeline.csv") %>%
+  transform(Date = as.Date(Date, "%m/%d/%Y")) %>%
+  transform(Event = as.character(Event)) %>%
+  transform(Event = str_replace_all(Event, "<br />", "\n"))
+
+blue <- "#8DB6CD"
+
+ggplot() + 
+  geom_segment(aes(x = Date, y = Disp, xend = Date), data = timeline, yend = 0,
+               size = 0.08, alpha = 0.5) + 
+  geom_segment(aes(x = Date[1] - 75, y = 0, xend = Date[length(Date)] + 75), data = timeline, yend = 0,
+               color = blue, size = 1.2) + 
+  geom_segment(aes(x = Date[1] - 75, y = -0.08, xend = Date[1] - 75), data = timeline, yend = 0,
+               color = blue, size = 1.2) + 
+  geom_segment(aes(x = Date[length(Date)] + 75, y = -0.08, 
+                   xend = Date[length(Date)] + 75), data = timeline, yend = 0,
+               color = blue, size = 1.2) + 
+  geom_text(aes(x = Date, y = Disp, label = Event), data = filter(timeline, Inspire == 1),
+            vjust = 1) + 
+  geom_text(aes(x = Date, y = Disp, label = Event), data = filter(timeline, Offensive == 1),
+            vjust = -0.2, size = 3.2) + 
+  geom_text(aes(x = Date, y = Disp, label = Event), data = filter(timeline, CT == 1),
+            vjust = -0.2, size = 3.2) + 
+  annotate(geom = "text", x = as.Date("1/1/2009", "%m/%d/%Y"), 
+           y = -0.6, label = "Inspire Publication\n(Issue)", fontface = "bold") +
+  annotate(geom = "text", x = as.Date("1/1/2009", "%m/%d/%Y"), 
+           y = 0.8, label = "AQAP Offensives", fontface = "bold") +
+  annotate(geom = "text", x = as.Date("1/1/2009", "%m/%d/%Y"), 
+           y = 2.4, label = "Counter-terror Ops", fontface = "bold") +
+  scale_x_date(limits = c(as.Date("5/1/2008", "%m/%d/%Y"), timeline$Date[length(timeline$Date)] + 90),
+               date_breaks = "1 year", date_labels = "%Y") + 
+  ylim(-1, 3.5) + 
+  labs(title = "Timeline of events") + 
+  theme_minimal() + 
+  theme(axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.line.y = element_blank(),
+    panel.grid.minor.x = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor.y = element_blank())
+
+```
+
+to fix: spacing, font type, etc.
+
+## Content
+
+explanation of different content categories
+
+```{r content_aggregate}
+cat_type <- catalogue %>%
   group_by(ItemType) %>%
   summarize(SumPages = sum(NumPages)) %>%
-  arrange(SumPages)
+  arrange(desc(SumPages)) %>%
+  mutate(TotPages = sum(SumPages)) %>%
+  mutate(page_freq_weight = SumPages/TotPages) %>%
+  transform(ItemType = as.factor(ItemType)) %>%
+  transform(ItemType = factor(ItemType, levels = ItemType))
 
-cat$ItemType <- factor(cat$ItemType, levels(cat$ItemType)[cat_type$ItemType])
+cat_all <- ggplot(cat_type, aes(ItemType, page_freq_weight)) + 
+  geom_point(color = "#5F9F9F") + 
+  geom_segment(aes(x = ItemType, y = 0, xend = ItemType, yend = page_freq_weight - 0.005)) + 
+  labs(title = "Percentage of articles written for Inspire, by issue",
+       x = "Issue", y = "Percentage of articles") + 
+  scale_y_continuous(limits = c(0, 0.3), breaks = seq(0, 0.3, .1), labels=percent) + 
+  theme(panel.grid.minor = element_blank(),
+        panel.grid.major.x = element_blank(),
+        axis.text.x = element_text(angle = -60, hjust = 0.3))
 
-cat_issue_type <- cat %>%
+pcat_all <- plotly_build(cat_all)
+
+pcat_all
+```
+
+to fix: add some padding to bottom so labels show up, clean up hover text
+
+by issue
+
+```{r content_by_issue}
+cat_issue_type <- catalogue %>%
   group_by(Issue, ItemType) %>%
   summarize(SumPages = sum(NumPages)) %>%
   ungroup()
@@ -80,7 +195,7 @@ cat_issue_type <- rbind(cat_issue_type, missing_rows) %>%
   arrange(Issue) %>%
   na.omit()
 
-TotPages <- cat %>%
+TotPages <- catalogue %>%
   group_by(Issue) %>%
   summarize(TotalPages = sum(NumPages))
 
@@ -88,70 +203,115 @@ cat_issue_type <- left_join(cat_issue_type, TotPages) %>%
   mutate(SharePages = SumPages/TotalPages)
 
 rep1 <- cat_issue_type %>%
-  filter(Issue < 16) %>%
   transform(Issue = Issue + 0.5)
 
 rep2 <- cat_issue_type %>%
-  filter(Issue < 16) %>%
-  transform(Issue = Issue + 0.9)
+  transform(Issue = Issue + 0.9999)
 
-cat_join <- rbind(cat_issue_type, rbind(rep1, rep2))
+cat_join <- bind_rows(cat_issue_type, rbind(rep1, rep2)) %>%
+  transform(ItemType = as.factor(ItemType)) %>%
+  transform(ItemType = factor(ItemType, levels = rev(cat_type$ItemType)))
 
-#how to make timeline
-#https://www.r-bloggers.com/timeline-graph-with-ggplot2/
-#http://stackoverflow.com/questions/7492274/draw-a-chronological-timeline-with-ggplot2
-#http://jason.bryer.org/timeline/
-#http://www.statsblogs.com/2012/07/07/timeline-graph-with-ggplot2/  
-  
-ggplot(filter(cat_join, Issue < 2),
-       aes(Issue, SumPages, fill = ItemType)) + 
-  geom_area() + 
-  scale_x_continuous(breaks = seq(1,16,1))
-  
-ggplot(cat_issue_type, aes(x=Issue, y=SumPages, fill=ItemType)) + 
-  geom_area() + 
-  scale_x_continuous(breaks = seq(1, 16, 1))
+#ggplot(cat_issue_type, aes(x=Issue, y=SumPages, fill=ItemType)) + 
+#  geom_area() + 
+#  scale_x_continuous(breaks = seq(1, 16, 1))
 
-ggplot(cat_issue_type, aes(x=Issue, y=SharePages, fill=ItemType)) + 
-  geom_area(color = "black") + 
-  scale_x_continuous(breaks = seq(1, 16, 1))
+#ggplot(cat_issue_type, aes(x=Issue, y=SharePages, fill=ItemType)) + 
+#  geom_area(color = "black") + 
+#  scale_x_continuous(breaks = seq(1, 16, 1))
 
-ggplot(cat_join, aes(x=Issue, y=SharePages, fill=ItemType)) + 
-  geom_area() + 
-  scale_x_continuous(breaks = seq(1, 16, 1))
+cat_issue <- ggplot(cat_join, aes(x=Issue, y=SharePages, fill=ItemType)) + 
+  geom_area(color = "white") + 
+  scale_x_continuous(breaks = seq(1.5, 16.5, 1), labels = seq(1, 16, 1)) + 
+  scale_y_continuous(labels = percent_format()) + 
+  labs(title = "Share of pages per category, by issue",
+       x = "Issue", y = "Percentage of total",
+       fill = "Category") + 
+  scale_fill_ptol() + 
+  theme_classic()
 
-cat_join$ItemType <- factor(cat_join$ItemType, levels = cat_type$ItemType)
+pcat_issue <- plotly_build(cat_issue)
 
-x = 6
-ggplot(filter(cat_join, Issue == x), 
-       aes(ItemType, SharePages, fill=ItemType)) + 
-  geom_bar(stat="identity") + 
-  coord_flip()
-#reverse order of legend
-
-cat_type <- cat_type %>%
-  mutate(Issue = 1) %>%
-  mutate(Share = SumPages/sum(SumPages))
-
-cat_type$ItemType <- factor(cat_type$ItemType, levels = cat_type$ItemType)
-
-cat_type2 <- cat_type %>%
-  transform(Issue = 1.999)
-
-cat_type <- rbind(cat_type, cat_type2)
-
-ggplot(filter(cat_type, Issue < 2), 
-       aes(x=Issue, y=Share, fill=ItemType)) + 
-  geom_area(color = "black")
+pcat_issue
 ```
 
-```{r}
-#timeline stuff
-#https://daattali.com/shiny/timevis-demo/
-#https://github.com/pachamaltese/bowie-timeline
-#http://ramnathv.github.io/rCharts/
-#http://stackoverflow.com/questions/20695311/chronological-timeline-with-points-in-time-and-format-date
-#https://www.packtpub.com/mapt/book/big-data-and-business-intelligence/9781783989508/2/ch02lvl1sec34/generating-an-interactive-gantt/timeline-chart-in-r
+to fix: inaccurate labels when mouse hovers over
 
+## Authorship
+
+```{r original_content}
+original <- catalogue %>%
+  filter(!is.na(OriginalContent)) %>%
+  group_by(Issue, OriginalContent) %>%
+  summarize(orig_freq = n())
+
+original_n <- catalogue %>%
+  filter(!is.na(OriginalContent)) %>%
+  group_by(Issue) %>%
+  summarize(tot_num = n())
+
+original <- left_join(original, original_n, by = "Issue") %>%
+  mutate(orig_freq_weight = orig_freq/tot_num) %>%
+  arrange(OriginalContent) %>%
+  transform(OriginalContent = ifelse(OriginalContent == 0, "No", "Yes")) %>%
+  transform(OriginalContent = as.factor(OriginalContent)) %>%
+  transform(OriginalContent = factor(OriginalContent, levels = OriginalContent))
+
+orig <- ggplot(original, aes(Issue, orig_freq_weight)) + 
+  geom_bar(aes(fill = OriginalContent), stat = "identity") + 
+  labs(title = "Percentage of articles written for article, by issue",
+       x = "Issue", y = "Percentage of articles",
+       fill = "Original Content?") + 
+  scale_fill_manual(values = c("#4B0082", "#FFD700")) + 
+  scale_x_continuous(breaks = seq(1, 16, 1)) + 
+  scale_y_continuous(labels = percent_format()) + 
+  theme_classic() + 
+  theme(axis.ticks.x = element_blank())
+
+porig <- plotly_build(orig)
+
+porig
 ```
 
+to fix: clean up hover labels
+
+```{r authors_num}
+authors_all_issues <- catalogue %>%
+  filter(!is.na(AuthorName) & !AuthorName %in% c("Various", 
+                                                "Al-Qaeda in the Arabian Peninsula",
+                                                "Al-Malahem",
+                                                "External Operations Team",
+                                                "Reconaissance Team",
+                                                "Experts")) %>%
+  count(AuthorName) %>%
+  arrange(n) %>%
+  filter(n >= 3) %>%
+  transform(AuthorName = as.factor(AuthorName)) %>%
+  transform(AuthorName = factor(AuthorName, levels = AuthorName))
+```
+
+`r nrow(authors_all_issues)` (presumably) individual authors
+
+```{r authors_chart}
+author_info <- read.csv("Data/author_info.csv", colClasses = c("factor", "character"))
+
+authors <- ggplot(authors_all_issues, aes(n, AuthorName)) + 
+  geom_point(color = "#FF6347") + 
+  geom_segment(aes(x = 0, y = AuthorName, xend = n-0.05, yend = AuthorName)) +
+  scale_x_continuous(breaks = seq(3, 11, 2)) + 
+  labs(title = "Inspire Magazine: most featured authors",
+       x = "Number of times featured",
+       y = "") + 
+  theme_minimal() + 
+  theme(plot.title = element_text(size = 14),
+        axis.title = element_text(size = 12),
+        panel.grid.minor = element_blank())
+
+pauthors <- plotly_build(authors)
+
+pauthors$x$data[[1]]$text <- author_info$X
+pauthors$x$data[[2]]$text <- ""
+pauthors
+```
+
+to fix: make hover text neater - make text bubbles more uniform in width
