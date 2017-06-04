@@ -6,7 +6,7 @@ The current version of the visualization is hosted [here](https://kimswchi.githu
 The files for the visualization are [here](https://github.com/kimswchi/inspire-magazine-dataviz).
 
 ### Note on reproducibility
-With newer versions of R the graphs may not render correctly in HTML format. Specifically, the spacing around plotly figures may be larger than specified in the R code. If this is the case, check the source code for the rendered HTML and make sure to see if the image size is specified correctly for the figures. If not, edit manually and save over the old HTML file.
+With newer versions of R the graphs may not render correctly in HTML format. Specifically, the spacing around plotly figures may be larger than specified in the R code. If this is the case, check the source code for the rendered HTML and make sure the image size is specified correctly for the figures. If not, edit manually and save over the old HTML file.
 
 For example, change this
 
