@@ -5,6 +5,8 @@ This project visualizes various aspects of *Inspire*, an online English-language
 The current version of the visualization is hosted [here](https://kimswchi.github.io/inspire-magazine-dataviz/).
 The files for the visualization are [here](https://github.com/kimswchi/inspire-magazine-dataviz).
 
+The packages used for the project are listed in `package_versions.md` in the linked repo.
+
 ### Note on reproducibility
 Using R v3.4.0 the graphs may not render correctly in HTML format. Specifically, the spacing around plotly figures may be larger than specified in the R code. If this is the case, check the source code for the rendered HTML and make sure the image size is specified correctly for the figures. If not, edit manually and save over the old HTML file.
 
@@ -15,6 +17,3 @@ For example, change this
 to
 
 `<div id="3a44e9b7042" style="width:700px;height:432px;" class="plotly html-widget"></div>`
-
-The packages used for the project are listed in `package_versions.md` in the linked repo.
-
