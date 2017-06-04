@@ -16,3 +16,5 @@ to
 
 `<div id="3a44e9b7042" style="width:700px;height:432px;" class="plotly html-widget"></div>`
 
+The packages used for the project are listed in `package_versions.md` in the linked repo.
+
