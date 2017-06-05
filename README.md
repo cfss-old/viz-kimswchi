@@ -8,4 +8,4 @@ The files for the visualization are [here](https://github.com/kimswchi/inspire-m
 The packages used for the project are listed in `package_versions.md` in the linked repo.
 
 #### Note:
-I don't know why there is a large blank space after every plotly graph. I edited the HTML source code and the html files when opened do not show the blank spaces. They only show up on the website.
+I don't know why there is a large blank space after every plotly graph. I edited the HTML source code and the HTML files when opened do not show the blank spaces. They only show up on the website.
