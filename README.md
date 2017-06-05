@@ -8,7 +8,7 @@ The files for the visualization are [here](https://github.com/kimswchi/inspire-m
 The packages used for the project are listed in `package_versions.md` in the linked repo.
 
 ### Note on reproducibility
-Using R v3.4.0 the graphs may not render correctly in HTML format. Specifically, the spacing around plotly figures may be larger than specified in the R code. If this is the case, check the source code for the rendered HTML and make sure the image size is specified correctly for the figures. If not, edit manually and save over the old HTML file.
+Using R v3.4.0 the graphs may not render correctly in HTML format. Specifically, the spacing around plotly figures may be larger than specified in the R code. If this is the case, check the source code for the rendered HTML and make sure the image size is specified correctly for the figures. If not, edit and save over the old HTML file.
 
 For example, change this
 
